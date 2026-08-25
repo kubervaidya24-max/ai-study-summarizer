@@ -33,6 +33,7 @@ export async function POST(
         telemetry: {
           durationMs: result.telemetry.durationMs,
           tokensEstimated: result.telemetry.tokensEstimated,
+          provider: result.telemetry.provider,
         },
       },
       { status: 200 }

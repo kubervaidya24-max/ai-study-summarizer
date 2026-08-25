@@ -12,6 +12,8 @@ import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { ExportModal } from "@/components/export/export-modal";
+import { TelemetryBadge } from "@/components/common/telemetry-badge";
+import { PipelineTelemetry, TelemetryTimer } from "@/services/telemetry";
 import { mockStudySession } from "@/lib/mock-data";
 import {
   StudySessionData,
@@ -50,6 +52,7 @@ function DashboardContent() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSaved, setIsSaved] = React.useState(false);
   const [isExportOpen, setIsExportOpen] = React.useState(false);
+  const [telemetry, setTelemetry] = React.useState<PipelineTelemetry | null>(null);
 
   const {
     status: uploadStatus,
@@ -93,13 +96,24 @@ function DashboardContent() {
       setSessionData(mockStudySession);
       setExtractedDoc(null);
       setIsSaved(false);
+      setTelemetry({
+        totalDurationMs: 1480,
+        extractionMs: 120,
+        aiSummaryMs: 580,
+        aiFlashcardsMs: 460,
+        aiQuizMs: 320,
+        estimatedTokens: 3420,
+        tokensPerSecond: 2310,
+        provider: "Precomputed Academic Benchmark",
+      });
       setIsProcessing(false);
       setActiveTab("summary");
     }, 600);
   };
 
-  // Real document extraction & 3-stage parallel AI generation handler
+  // Real document extraction & 3-stage parallel AI generation handler with telemetry stopwatch
   const handleFileSelect = async (file: File) => {
+    const timer = new TelemetryTimer();
     setIsProcessing(true);
     setExtractionWarning(null);
     setIsSaved(false);
@@ -113,12 +127,14 @@ function DashboardContent() {
       const formData = new FormData();
       formData.append("file", file);
 
+      const extractStart = performance.now();
       const extractRes = await fetch("/api/document/extract", {
         method: "POST",
         body: formData,
       });
 
       const extractResult: ApiResponse<ExtractedDocumentResult> = await extractRes.json();
+      const extractionMs = Math.round(performance.now() - extractStart);
 
       if (!extractRes.ok || !extractResult.success || !extractResult.data) {
         throw new Error(extractResult.error?.message || "Failed to extract text from document.");
@@ -137,6 +153,7 @@ function DashboardContent() {
         subtitle: "Drafting executive summary, building 3D active-recall flashcards, and generating practice questions.",
       });
 
+      const aiGenStart = performance.now();
       const [summaryRes, flashcardsRes, quizRes] = await Promise.all([
         fetch("/api/generate/summary", {
           method: "POST",
@@ -181,6 +198,28 @@ function DashboardContent() {
         quizResult.success && quizResult.data
           ? quizResult.data
           : mockStudySession.quiz;
+
+      const totalDurationMs = timer.measure();
+      const estimatedTokens =
+        (summaryResult.telemetry?.tokensEstimated || 0) +
+        (flashcardsResult.telemetry?.tokensEstimated || 0) +
+        (quizResult.telemetry?.tokensEstimated || 0) ||
+        Math.round(doc.cleanedText.length / 4);
+
+      const aiSummaryMs = summaryResult.telemetry?.durationMs || Math.round(performance.now() - aiGenStart);
+      const aiFlashcardsMs = flashcardsResult.telemetry?.durationMs || Math.round(performance.now() - aiGenStart);
+      const aiQuizMs = quizResult.telemetry?.durationMs || Math.round(performance.now() - aiGenStart);
+
+      setTelemetry({
+        totalDurationMs,
+        extractionMs,
+        aiSummaryMs,
+        aiFlashcardsMs,
+        aiQuizMs,
+        estimatedTokens,
+        tokensPerSecond: TelemetryTimer.calculateThroughput(estimatedTokens, totalDurationMs),
+        provider: summaryResult.telemetry?.provider || "Multi-Provider AI Engine",
+      });
 
       const newSession: StudySessionData = {
         id: `session_${Date.now()}`,
@@ -246,6 +285,7 @@ function DashboardContent() {
     setExtractedDoc(null);
     setExtractionWarning(null);
     setIsSaved(false);
+    setTelemetry(null);
     resetUpload();
     setActiveTab("upload");
   };
@@ -326,6 +366,9 @@ function DashboardContent() {
             </div>
           )}
         </div>
+
+        {/* Telemetry Observability Widget */}
+        {telemetry && <TelemetryBadge telemetry={telemetry} />}
 
         {/* Scanned/Extraction Warning Banner */}
         {extractionWarning && (

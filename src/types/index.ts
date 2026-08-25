@@ -108,5 +108,6 @@ export interface ApiResponse<T> {
   telemetry?: {
     durationMs: number;
     tokensEstimated?: number;
+    provider?: string;
   };
 }
