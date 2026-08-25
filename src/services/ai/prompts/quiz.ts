@@ -1,3 +1,5 @@
+import { sanitizeStudyMaterial } from "@/services/security/prompt-sanitizer";
+
 export const QUIZ_SYSTEM_PROMPT = `You are an expert academic examiner and psychometrician creating rigorous, high-yield practice quizzes.
 
 CRITICAL DIRECTIVES:
@@ -30,9 +32,11 @@ QUIZ ITEM SCHEMA:
 ]`;
 
 export function buildQuizUserPrompt(text: string, count = 5): string {
+  const sanitizedText = sanitizeStudyMaterial(text);
+
   return `Please generate exactly ${count} multiple-choice questions from the study material below. Return ONLY a valid JSON array of question objects.
 
 <untrusted_study_material>
-${text}
+${sanitizedText}
 </untrusted_study_material>`;
 }
