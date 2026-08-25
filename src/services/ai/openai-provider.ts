@@ -3,8 +3,10 @@ import { LLMProvider, SummaryGenerationOptions } from "./provider";
 import { StudySummary, Flashcard, QuizQuestion } from "@/types";
 import { cleanAndParseSummaryJson } from "./schemas/summary";
 import { cleanAndParseFlashcardsJson } from "./schemas/flashcards";
+import { cleanAndParseQuizJson } from "./schemas/quiz";
 import { SUMMARY_SYSTEM_PROMPT, buildSummaryUserPrompt } from "./prompts/summary";
 import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "./prompts/flashcards";
+import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt } from "./prompts/quiz";
 
 export class OpenAIProvider implements LLMProvider {
   name = "OpenAI";
@@ -52,7 +54,19 @@ export class OpenAIProvider implements LLMProvider {
     return cleanAndParseFlashcardsJson(content);
   }
 
-  async generateQuiz(): Promise<QuizQuestion[]> {
-    throw new Error("Quiz generation will be implemented in Level 7.");
+  async generateQuiz(text: string, questionCount = 5): Promise<QuizQuestion[]> {
+    const userPrompt = buildQuizUserPrompt(text, questionCount);
+
+    const response = await this.client.chat.completions.create({
+      model: this.modelName,
+      messages: [
+        { role: "system", content: QUIZ_SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.2,
+    });
+
+    const content = response.choices[0]?.message?.content || "";
+    return cleanAndParseQuizJson(content);
   }
 }

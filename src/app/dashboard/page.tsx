@@ -11,7 +11,14 @@ import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { mockStudySession } from "@/lib/mock-data";
-import { StudySessionData, ExtractedDocumentResult, StudySummary, Flashcard, ApiResponse } from "@/types";
+import {
+  StudySessionData,
+  ExtractedDocumentResult,
+  StudySummary,
+  Flashcard,
+  QuizQuestion,
+  ApiResponse,
+} from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -56,7 +63,7 @@ export default function DashboardPage() {
     }, 600);
   };
 
-  // Real document extraction & multi-asset AI generation handler
+  // Real document extraction & 3-stage parallel AI generation handler
   const handleFileSelect = async (file: File) => {
     setIsProcessing(true);
     setExtractionWarning(null);
@@ -88,13 +95,13 @@ export default function DashboardPage() {
         setExtractionWarning(doc.warning);
       }
 
-      // Step 2: Generate AI Summary and Flashcards in parallel
+      // Step 2: Generate AI Summary, Flashcards, and Quiz in parallel
       setLoadingMessage({
-        title: "AI Synthesis & Flashcard Generation in Progress...",
-        subtitle: "Drafting high-yield summary, extracting key concepts, and generating 3D active-recall flashcards.",
+        title: "AI Synthesis, Flashcards & Quiz Generation...",
+        subtitle: "Drafting executive summary, building 3D active-recall flashcards, and generating practice questions.",
       });
 
-      const [summaryRes, flashcardsRes] = await Promise.all([
+      const [summaryRes, flashcardsRes, quizRes] = await Promise.all([
         fetch("/api/generate/summary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -111,19 +118,35 @@ export default function DashboardPage() {
             count: 6,
           }),
         }),
+        fetch("/api/generate/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: doc.cleanedText,
+            questionCount: 5,
+          }),
+        }),
       ]);
 
       const summaryResult: ApiResponse<StudySummary> = await summaryRes.json();
       const flashcardsResult: ApiResponse<Flashcard[]> = await flashcardsRes.json();
+      const quizResult: ApiResponse<QuizQuestion[]> = await quizRes.json();
 
       if (!summaryRes.ok || !summaryResult.success || !summaryResult.data) {
         throw new Error(summaryResult.error?.message || "Failed to generate AI summary.");
       }
 
       const summary = summaryResult.data;
-      const flashcards = flashcardsResult.success && flashcardsResult.data ? flashcardsResult.data : mockStudySession.flashcards;
+      const flashcards =
+        flashcardsResult.success && flashcardsResult.data
+          ? flashcardsResult.data
+          : mockStudySession.flashcards;
+      const quiz =
+        quizResult.success && quizResult.data
+          ? quizResult.data
+          : mockStudySession.quiz;
 
-      // Initialize session with live AI summary and live flashcards (quiz populated with mock templates until Level 7)
+      // Initialize complete live study session
       setSessionData({
         id: `session_${Date.now()}`,
         title: summary.title || doc.metadata.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
@@ -136,7 +159,7 @@ export default function DashboardPage() {
         extractedText: doc.cleanedText,
         summary,
         flashcards,
-        quiz: mockStudySession.quiz,
+        quiz,
       });
 
       setIsProcessing(false);
@@ -313,7 +336,15 @@ export default function DashboardPage() {
             {/* TAB 4: QUIZ */}
             <TabsContent value="quiz" className="pt-4">
               {sessionData ? (
-                <QuizEngine questions={sessionData.quiz} />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      AI Practice MCQ Quiz ({sessionData.quiz.length} Questions)
+                    </span>
+                  </div>
+                  <QuizEngine questions={sessionData.quiz} />
+                </div>
               ) : (
                 <EmptyState
                   icon={HelpCircle}

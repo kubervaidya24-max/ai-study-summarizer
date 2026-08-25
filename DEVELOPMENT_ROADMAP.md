@@ -113,7 +113,7 @@ flowchart TD
 - **Branch**: `level-07-quiz`
 - **Scope**: AI-generated 4-option MCQs with explanations, step-by-step interactive quiz viewer, hidden correct answer validation on client, instant feedback, score & percentage calculation, final assessment summary screen.
 - **Verification**: Reliable score computation, clear rationales displayed post-answer.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
