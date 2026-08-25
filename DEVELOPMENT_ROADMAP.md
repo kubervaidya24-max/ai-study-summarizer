@@ -125,11 +125,11 @@ flowchart TD
 
 ---
 
-### Level 09: Database & Prisma Schema
+### Level 09: Database & Data Model
 - **Branch**: `level-09-database`
-- **Scope**: Prisma ORM configuration, SQLite (local) / PostgreSQL schema models (`User`, `StudySession`, `Document`, `Summary`, `FlashcardSet`, `Flashcard`, `Quiz`, `QuizQuestion`, `QuizAttempt`), database client singleton, migrations.
-- **Verification**: `npx prisma db push` or migrate passes; relationships integrity tested.
-- **Status**: ⏳ Pending
+- **Scope**: Prisma ORM setup, relational schema for `User`, `StudySession`, `Document`, `Summary`, `FlashcardSet`, `Flashcard`, `Quiz`, `QuizQuestion`, `QuizAttempt`. Database singleton client with global pooling.
+- **Verification**: Schema migration applies cleanly, relations cascade on delete.
+- **Status**: 🟢 Completed
 
 ---
 

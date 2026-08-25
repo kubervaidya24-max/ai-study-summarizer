@@ -1,0 +1,144 @@
+// Prisma Schema for AI Study Summarizer
+// Supports SQLite for fast zero-config local development and PostgreSQL for production deployments.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String?
+  passwordHash String
+  image        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  sessions     StudySession[]
+  quizAttempts QuizAttempt[]
+
+  @@map("users")
+}
+
+model StudySession {
+  id           String        @id @default(cuid())
+  userId       String?
+  title        String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document     Document?
+  summary      Summary?
+  flashcardSet FlashcardSet?
+  quiz         Quiz?
+
+  @@index([userId])
+  @@map("study_sessions")
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  sessionId   String       @unique
+  fileName    String
+  fileType    String       // "pdf" | "txt" | "md"
+  fileSize    Int
+  pageCount   Int          @default(1)
+  wordCount   Int          @default(0)
+  rawText     String?
+
+  session     StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model Summary {
+  id           String       @id @default(cuid())
+  sessionId    String       @unique
+  title        String
+  overview     String
+  keyTakeaways String       // Stored as serialized JSON string
+  concepts     String       // Stored as serialized JSON string
+  examTips     String       // Stored as serialized JSON string
+
+  session      StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("summaries")
+}
+
+model FlashcardSet {
+  id        String       @id @default(cuid())
+  sessionId String       @unique
+  cardCount Int          @default(0)
+
+  session   StudySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  cards     Flashcard[]
+
+  @@map("flashcard_sets")
+}
+
+model Flashcard {
+  id            String       @id @default(cuid())
+  setId         String
+  question      String
+  answer        String
+  difficulty    String       @default("MEDIUM") // "EASY" | "MEDIUM" | "HARD"
+  topic         String       @default("General")
+  sourceSnippet String?
+
+  set           FlashcardSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+
+  @@index([setId])
+  @@map("flashcards")
+}
+
+model Quiz {
+  id        String         @id @default(cuid())
+  sessionId String         @unique
+  title     String
+
+  session   StudySession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id           String   @id @default(cuid())
+  quizId       String
+  question     String
+  options      String   // Stored as JSON array [optA, optB, optC, optD]
+  correctIndex Int      // 0-3
+  explanation  String
+  topic        String   @default("General")
+  difficulty   String   @default("MEDIUM") // "EASY" | "MEDIUM" | "HARD"
+
+  quiz         Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  quizId         String
+  userId         String?
+  score          Int
+  totalQuestions Int
+  percentage     Float
+  answers        String   // Stored as JSON string
+  completedAt    DateTime @default(now())
+
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([quizId])
+  @@index([userId])
+  @@map("quiz_attempts")
+}
