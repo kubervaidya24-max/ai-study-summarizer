@@ -13,6 +13,26 @@ export interface DocumentMetadata {
   extractedAt: string;
 }
 
+export interface ExtractedChunk {
+  id: string;
+  chunkIndex: number;
+  text: string;
+  tokenEstimate: number;
+  wordCount: number;
+}
+
+export interface ExtractedDocumentResult {
+  metadata: DocumentMetadata;
+  fullText: string;
+  cleanedText: string;
+  wordCount: number;
+  characterCount: number;
+  pageCount?: number;
+  isScanned?: boolean;
+  warning?: string;
+  chunks: ExtractedChunk[];
+}
+
 export type ConceptImportance = "HIGH" | "MEDIUM" | "LOW";
 
 export interface KeyConcept {
@@ -70,6 +90,7 @@ export interface StudySessionData {
   title: string;
   createdAt: string;
   document: DocumentMetadata;
+  extractedText?: string;
   summary: StudySummary;
   flashcards: Flashcard[];
   quiz: QuizQuestion[];

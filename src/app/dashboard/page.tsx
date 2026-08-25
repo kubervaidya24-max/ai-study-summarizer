@@ -11,7 +11,7 @@ import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { mockStudySession } from "@/lib/mock-data";
-import { StudySessionData } from "@/types";
+import { StudySessionData, ExtractedDocumentResult, ApiResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -21,57 +21,87 @@ import {
   Layers,
   HelpCircle,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = React.useState<string>("upload");
   const [sessionData, setSessionData] = React.useState<StudySessionData | null>(null);
-  const [isProcessingAI, setIsProcessingAI] = React.useState(false);
+  const [extractedDoc, setExtractedDoc] = React.useState<ExtractedDocumentResult | null>(null);
+  const [isProcessingDoc, setIsProcessingDoc] = React.useState(false);
+  const [extractionWarning, setExtractionWarning] = React.useState<string | null>(null);
 
   const {
     status: uploadStatus,
     progress: uploadProgress,
     error: uploadError,
-    uploadFile,
     reset: resetUpload,
   } = useFileUpload();
 
   // Load sample demo session
   const handleLoadSample = () => {
-    setIsProcessingAI(true);
+    setIsProcessingDoc(true);
+    setExtractionWarning(null);
     setTimeout(() => {
       setSessionData(mockStudySession);
-      setIsProcessingAI(false);
+      setExtractedDoc(null);
+      setIsProcessingDoc(false);
       setActiveTab("summary");
     }, 600);
   };
 
-  // Real upload handler
+  // Real document upload & extraction handler
   const handleFileSelect = async (file: File) => {
-    const uploaded = await uploadFile(file);
-    if (uploaded) {
-      setIsProcessingAI(true);
-      // Simulate level 3-4 pipeline transition to mock summary for study viewer
-      setTimeout(() => {
-        setSessionData({
-          ...mockStudySession,
-          title: uploaded.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
-          document: {
-            ...mockStudySession.document,
-            fileName: uploaded.fileName,
-            fileSize: uploaded.fileSize,
-            fileType: uploaded.fileType,
-            extractedAt: uploaded.extractedAt,
-          },
-        });
-        setIsProcessingAI(false);
-        setActiveTab("summary");
-      }, 700);
+    setIsProcessingDoc(true);
+    setExtractionWarning(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/document/extract", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result: ApiResponse<ExtractedDocumentResult> = await response.json();
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.error?.message || "Failed to extract text from document.");
+      }
+
+      const doc = result.data;
+      setExtractedDoc(doc);
+
+      if (doc.warning) {
+        setExtractionWarning(doc.warning);
+      }
+
+      // Initialize session with extracted metadata and mock study assets for Level 4
+      setSessionData({
+        ...mockStudySession,
+        title: doc.metadata.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
+        document: {
+          ...doc.metadata,
+          wordCount: doc.wordCount,
+          pageCount: doc.pageCount || 1,
+        },
+        extractedText: doc.cleanedText,
+      });
+
+      setIsProcessingDoc(false);
+      setActiveTab("summary");
+    } catch (err: unknown) {
+      setIsProcessingDoc(false);
+      const message = err instanceof Error ? err.message : "Document extraction failed.";
+      setExtractionWarning(message);
     }
   };
 
   const handleClearSession = () => {
     setSessionData(null);
+    setExtractedDoc(null);
+    setExtractionWarning(null);
     resetUpload();
     setActiveTab("upload");
   };
@@ -91,6 +121,11 @@ export default function DashboardPage() {
               {sessionData && (
                 <Badge variant="success" className="text-[10px]">
                   Session Active
+                </Badge>
+              )}
+              {extractedDoc && (
+                <Badge variant="secondary" className="text-[10px] font-mono">
+                  {extractedDoc.chunks.length} Chunks Generated
                 </Badge>
               )}
             </div>
@@ -120,12 +155,23 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* Scanned/Extraction Warning Banner */}
+        {extractionWarning && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-300 text-xs md:text-sm animate-in fade-in-50">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-semibold text-white">Document Processing Notice</span>
+              <p className="leading-relaxed">{extractionWarning}</p>
+            </div>
+          </div>
+        )}
+
         {/* Loading Overlay */}
-        {isProcessingAI ? (
+        {isProcessingDoc ? (
           <div className="glass-panel p-12 rounded-3xl">
             <LoadingState
-              title="Processing Document & Study Assets..."
-              subtitle="Validating document headers and preparing content for the study pipeline."
+              title="Extracting & Normalizing Text..."
+              subtitle="Parsing document structure, cleaning Unicode formatting, and building semantic chunks."
             />
           </div>
         ) : (

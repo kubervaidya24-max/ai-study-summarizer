@@ -87,9 +87,9 @@ flowchart TD
 
 ### Level 04: PDF & Text Extraction Pipeline
 - **Branch**: `level-04-pdf-extraction`
-- **Scope**: PDF text extraction engine (`pdfjs-dist`), multi-page parsing, text normalization, Unicode cleaning, noise reduction, scanned/image-only PDF detection, token-aware semantic chunking with overlap.
+- **Scope**: PDF text extraction engine (`pdfjs-dist` / `pdf-parse`), multi-page parsing, text normalization, Unicode cleaning, noise reduction, scanned/image-only PDF detection, token-aware semantic chunking with overlap.
 - **Verification**: Unit tests on text extraction, handling of corrupted and empty documents.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
