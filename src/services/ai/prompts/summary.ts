@@ -1,4 +1,5 @@
 import { SummaryGenerationOptions } from "../provider";
+import { sanitizeStudyMaterial } from "@/services/security/prompt-sanitizer";
 
 export const SUMMARY_SYSTEM_PROMPT = `You are a world-class academic tutor and executive researcher.
 Your mission is to analyze academic lecture notes, textbooks, and research papers, and synthesize them into structured, high-yield study guides.
@@ -38,11 +39,12 @@ export function buildSummaryUserPrompt(
   text: string,
   options?: SummaryGenerationOptions
 ): string {
+  const sanitizedText = sanitizeStudyMaterial(text);
   const detail = options?.detailLevel === "concise" ? "concise and high-yield" : "in-depth and comprehensive";
 
   return `Please analyze the following study document and generate a ${detail} study summary in strict JSON format according to the system instructions.
 
 <untrusted_study_material>
-${text}
+${sanitizedText}
 </untrusted_study_material>`;
 }

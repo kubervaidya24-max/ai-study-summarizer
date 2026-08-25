@@ -1,3 +1,5 @@
+import { sanitizeStudyMaterial } from "@/services/security/prompt-sanitizer";
+
 export const FLASHCARDS_SYSTEM_PROMPT = `You are an expert cognitive scientist and master educator specializing in spaced repetition and active recall flashcard generation.
 
 CRITICAL DIRECTIVES:
@@ -20,9 +22,11 @@ FLASHCARD ITEM SCHEMA:
 ]`;
 
 export function buildFlashcardsUserPrompt(text: string, count = 6): string {
+  const sanitizedText = sanitizeStudyMaterial(text);
+
   return `Please generate exactly ${count} active-recall flashcards from the study material below. Return ONLY a valid JSON array of flashcards.
 
 <untrusted_study_material>
-${text}
+${sanitizedText}
 </untrusted_study_material>`;
 }

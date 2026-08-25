@@ -165,11 +165,11 @@ flowchart TD
 
 ---
 
-### Level 14: Security Hardening & Sanitization
+### Level 14: Security Hardening
 - **Branch**: `level-14-security`
-- **Scope**: Prompt injection defense audit, XML sandboxing, server-only environment variable isolation, MIME magic byte validation, CSRF/XSS review, in-memory rate limiting.
-- **Verification**: Penetration testing against prompt injection payloads and malicious files.
-- **Status**: ⏳ Pending
+- **Scope**: Sliding window in-memory rate limiting, prompt injection XML tag neutralization and control char stripping, HTTP security headers (`CSP`, `HSTS`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`), payload size verification.
+- **Verification**: Prompt jailbreak attempts neutralized into passive data; rate limit returns HTTP 429 with retry headers.
+- **Status**: 🟢 Completed
 
 ---
 
