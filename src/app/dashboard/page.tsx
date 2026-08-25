@@ -14,6 +14,7 @@ import { mockStudySession } from "@/lib/mock-data";
 import { StudySessionData } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useFileUpload } from "@/hooks/use-file-upload";
 import {
   UploadCloud,
   BookOpen,
@@ -25,35 +26,54 @@ import {
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = React.useState<string>("upload");
   const [sessionData, setSessionData] = React.useState<StudySessionData | null>(null);
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [isProcessingAI, setIsProcessingAI] = React.useState(false);
+
+  const {
+    status: uploadStatus,
+    progress: uploadProgress,
+    error: uploadError,
+    uploadFile,
+    reset: resetUpload,
+  } = useFileUpload();
 
   // Load sample demo session
   const handleLoadSample = () => {
-    setIsProcessing(true);
+    setIsProcessingAI(true);
     setTimeout(() => {
       setSessionData(mockStudySession);
-      setIsProcessing(false);
+      setIsProcessingAI(false);
       setActiveTab("summary");
     }, 600);
   };
 
-  // Mock file selection handler for Level 2 UI
-  const handleFileSelect = (file: File) => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      setSessionData({
-        ...mockStudySession,
-        title: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
-        document: {
-          ...mockStudySession.document,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.name.endsWith(".pdf") ? "pdf" : file.name.endsWith(".md") ? "md" : "txt",
-        },
-      });
-      setIsProcessing(false);
-      setActiveTab("summary");
-    }, 800);
+  // Real upload handler
+  const handleFileSelect = async (file: File) => {
+    const uploaded = await uploadFile(file);
+    if (uploaded) {
+      setIsProcessingAI(true);
+      // Simulate level 3-4 pipeline transition to mock summary for study viewer
+      setTimeout(() => {
+        setSessionData({
+          ...mockStudySession,
+          title: uploaded.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
+          document: {
+            ...mockStudySession.document,
+            fileName: uploaded.fileName,
+            fileSize: uploaded.fileSize,
+            fileType: uploaded.fileType,
+            extractedAt: uploaded.extractedAt,
+          },
+        });
+        setIsProcessingAI(false);
+        setActiveTab("summary");
+      }, 700);
+    }
+  };
+
+  const handleClearSession = () => {
+    setSessionData(null);
+    resetUpload();
+    setActiveTab("upload");
   };
 
   return (
@@ -80,7 +100,7 @@ export default function DashboardPage() {
             {sessionData && (
               <p className="text-xs text-slate-400 font-mono flex items-center gap-2 pt-1">
                 <FileText className="w-3.5 h-3.5 text-slate-400" />
-                {sessionData.document.fileName} • {sessionData.document.pageCount} Pages • {sessionData.document.wordCount.toLocaleString()} Words
+                {sessionData.document.fileName} • {sessionData.document.pageCount || 1} Pages • {sessionData.document.wordCount.toLocaleString()} Words
               </p>
             )}
           </div>
@@ -91,10 +111,7 @@ export default function DashboardPage() {
                 variant="outline"
                 size="sm"
                 className="text-xs gap-1.5 border-slate-700"
-                onClick={() => {
-                  setSessionData(null);
-                  setActiveTab("upload");
-                }}
+                onClick={handleClearSession}
               >
                 <UploadCloud className="w-3.5 h-3.5" />
                 Upload New Document
@@ -104,11 +121,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Loading Overlay */}
-        {isProcessing ? (
+        {isProcessingAI ? (
           <div className="glass-panel p-12 rounded-3xl">
             <LoadingState
-              title="Generating Study Assets..."
-              subtitle="Extracting text structure, synthesizing key concepts, and drafting flashcards."
+              title="Processing Document & Study Assets..."
+              subtitle="Validating document headers and preparing content for the study pipeline."
             />
           </div>
         ) : (
@@ -141,7 +158,10 @@ export default function DashboardPage() {
                 <UploadDropzone
                   onFileSelect={handleFileSelect}
                   onLoadMockDemo={handleLoadSample}
-                  isProcessing={isProcessing}
+                  onClearFile={handleClearSession}
+                  uploadStatus={uploadStatus}
+                  uploadProgress={uploadProgress}
+                  uploadError={uploadError}
                   selectedFileName={sessionData?.document.fileName}
                   selectedFileSize={sessionData?.document.fileSize}
                 />

@@ -65,7 +65,7 @@ flowchart TD
 - **Branch**: `level-01-foundation`
 - **Scope**: Next.js 15 App Router scaffold, React 19, TypeScript strict mode, TailwindCSS v4 configuration, ESLint, `.env.example`, clean folder architecture (`src/app`, `src/components`, `src/lib`, `src/services`, `src/hooks`, `src/types`, `src/utils`, `src/config`).
 - **Verification**: `npm run build` succeeds, clean dev server startup.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
@@ -73,7 +73,7 @@ flowchart TD
 - **Branch**: `level-02-ui`
 - **Scope**: Modern EdTech design system with rich dark/light styling, glassmorphism accents, ShadCN UI primitives, responsive Navbar, Hero section, Study Dashboard skeleton, Flashcard card frame, Quiz interface layout, empty & loading states.
 - **Verification**: Responsive on mobile/desktop, zero console warnings.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
@@ -81,7 +81,7 @@ flowchart TD
 - **Branch**: `level-03-upload`
 - **Scope**: Drag-and-drop zone, file picker, client-side & server-side validation (MIME types, 25MB size cap, supported extensions `.pdf`, `.txt`, `.md`), upload progress bar, realistic processing state indicators.
 - **Verification**: Rejection of invalid file types and oversized files; smooth progress animations.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
