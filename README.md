@@ -85,9 +85,9 @@ The application is built following a strict 19-level engineering progression:
 | Level | Name | Description | Status |
 | :--- | :--- | :--- | :--- |
 | **00** | Project Planning | System architecture, data flow, roadmap, and Git setup | 🟢 Completed |
-| **01** | Next.js 15 Foundation | Clean scaffold, TypeScript, Tailwind v4, ESLint, config | ⏳ Pending |
-| **02** | UI Foundation | EdTech design system, Landing, Dashboard, Responsive layout | ⏳ Pending |
-| **03** | File Upload System | Drag-and-drop, validation, client/server file intake | ⏳ Pending |
+| **01** | Next.js 15 Foundation | Clean scaffold, TypeScript, Tailwind v4, ESLint, config | 🟢 Completed |
+| **02** | UI Foundation | EdTech design system, Landing, Dashboard, Responsive layout | 🟢 Completed |
+| **03** | File Upload System | Drag-and-drop, validation, client/server file intake | 🟢 Completed |
 | **04** | PDF/Text Extraction | PDF parsing, sanitization, Unicode handling, chunking | ⏳ Pending |
 | **05** | LLM Summary Engine | Provider-agnostic AI adapter, structured Zod output | ⏳ Pending |
 | **06** | Flashcard Engine | 3D flip card viewer, rating, shuffle, active recall | ⏳ Pending |
