@@ -3,7 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_APP_NAME: z.string().default("AI Study Summarizer"),
-  DEFAULT_AI_PROVIDER: z.enum(["gemini", "openai", "anthropic", "groq"]).default("gemini"),
+  DEFAULT_AI_PROVIDER: z.enum(["gemini", "openai", "anthropic", "groq", "mock"]).default("gemini"),
   GEMINI_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),

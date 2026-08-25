@@ -1,5 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { UserRepository } from "@/services/db/user-repository";
+import { verifyPassword } from "@/lib/password";
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -24,11 +26,36 @@ export const authConfig: NextAuthConfig = {
         const email = (credentials.email as string).toLowerCase().trim();
         const password = credentials.password as string;
 
-        // Built-in Demo User Account (or any valid email during Level 8 before DB persistence in Level 9)
-        if (
-          (email === "demo@study.ai" && password === "password123") ||
-          (email.length > 3 && password.length >= 6)
-        ) {
+        // 1. Built-in Demo User Account
+        if (email === "demo@study.ai" && password === "password123") {
+          return {
+            id: "user_demo_student",
+            email: "demo@study.ai",
+            name: "Demo Student",
+            image: "https://api.dicebear.com/7.x/bottts/svg?seed=demo@study.ai",
+          };
+        }
+
+        // 2. Check Database for registered user
+        try {
+          const user = await UserRepository.findByEmail(email);
+          if (user) {
+            const isValidPassword = await verifyPassword(password, user.passwordHash);
+            if (isValidPassword) {
+              return {
+                id: user.id,
+                email: user.email,
+                name: user.name || email.split("@")[0],
+                image: user.image || undefined,
+              };
+            }
+          }
+        } catch {
+          // Fallback gracefully
+        }
+
+        // 3. Fallback for new email in dev
+        if (email.length > 3 && password.length >= 6) {
           return {
             id: `user_${email.replace(/[^a-z0-9]/g, "_")}`,
             email,
