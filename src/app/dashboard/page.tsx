@@ -11,6 +11,7 @@ import { FlashcardViewer } from "@/components/flashcards/flashcard-viewer";
 import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
+import { ExportModal } from "@/components/export/export-modal";
 import { mockStudySession } from "@/lib/mock-data";
 import {
   StudySessionData,
@@ -33,6 +34,7 @@ import {
   Sparkles,
   Save,
   Check,
+  Download,
 } from "lucide-react";
 
 function DashboardContent() {
@@ -47,6 +49,7 @@ function DashboardContent() {
   const [extractionWarning, setExtractionWarning] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSaved, setIsSaved] = React.useState(false);
+  const [isExportOpen, setIsExportOpen] = React.useState(false);
 
   const {
     status: uploadStatus,
@@ -287,7 +290,17 @@ function DashboardContent() {
           </div>
 
           {sessionData && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5 border-slate-700 hover:border-purple-500 text-purple-300"
+                onClick={() => setIsExportOpen(true)}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export Assets
+              </Button>
+
               {!isSaved && (
                 <Button
                   variant="default"
@@ -444,6 +457,15 @@ function DashboardContent() {
           </Tabs>
         )}
       </main>
+
+      {/* Export Modal */}
+      {sessionData && (
+        <ExportModal
+          isOpen={isExportOpen}
+          onClose={() => setIsExportOpen(false)}
+          sessionData={sessionData}
+        />
+      )}
 
       <Footer />
     </div>
