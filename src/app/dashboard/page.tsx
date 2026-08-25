@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -30,15 +31,22 @@ import {
   FileText,
   AlertTriangle,
   Sparkles,
+  Save,
+  Check,
 } from "lucide-react";
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const sessionIdParam = searchParams.get("sessionId");
+
   const [activeTab, setActiveTab] = React.useState<string>("upload");
   const [sessionData, setSessionData] = React.useState<StudySessionData | null>(null);
   const [extractedDoc, setExtractedDoc] = React.useState<ExtractedDocumentResult | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [loadingMessage, setLoadingMessage] = React.useState({ title: "", subtitle: "" });
   const [extractionWarning, setExtractionWarning] = React.useState<string | null>(null);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isSaved, setIsSaved] = React.useState(false);
 
   const {
     status: uploadStatus,
@@ -46,6 +54,29 @@ export default function DashboardPage() {
     error: uploadError,
     reset: resetUpload,
   } = useFileUpload();
+
+  // Load session by ID if query param is passed
+  React.useEffect(() => {
+    if (sessionIdParam) {
+      setIsProcessing(true);
+      setLoadingMessage({
+        title: "Loading Saved Study Session...",
+        subtitle: "Hydrating document summary, flashcards, and quiz from library.",
+      });
+
+      fetch(`/api/sessions/${sessionIdParam}`)
+        .then((res) => res.json())
+        .then((res: ApiResponse<StudySessionData>) => {
+          if (res.success && res.data) {
+            setSessionData(res.data);
+            setIsSaved(true);
+            setActiveTab("summary");
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsProcessing(false));
+    }
+  }, [sessionIdParam]);
 
   // Load sample demo session
   const handleLoadSample = () => {
@@ -58,6 +89,7 @@ export default function DashboardPage() {
     setTimeout(() => {
       setSessionData(mockStudySession);
       setExtractedDoc(null);
+      setIsSaved(false);
       setIsProcessing(false);
       setActiveTab("summary");
     }, 600);
@@ -67,6 +99,7 @@ export default function DashboardPage() {
   const handleFileSelect = async (file: File) => {
     setIsProcessing(true);
     setExtractionWarning(null);
+    setIsSaved(false);
     setLoadingMessage({
       title: "Extracting Document Content...",
       subtitle: "Parsing document structure and cleaning text layers.",
@@ -146,8 +179,7 @@ export default function DashboardPage() {
           ? quizResult.data
           : mockStudySession.quiz;
 
-      // Initialize complete live study session
-      setSessionData({
+      const newSession: StudySessionData = {
         id: `session_${Date.now()}`,
         title: summary.title || doc.metadata.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
         createdAt: new Date().toISOString(),
@@ -160,7 +192,21 @@ export default function DashboardPage() {
         summary,
         flashcards,
         quiz,
-      });
+      };
+
+      setSessionData(newSession);
+
+      // Auto-save session to DB in background
+      fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSession),
+      })
+        .then((r) => r.json())
+        .then((r) => {
+          if (r.success) setIsSaved(true);
+        })
+        .catch(() => {});
 
       setIsProcessing(false);
       setActiveTab("summary");
@@ -171,10 +217,32 @@ export default function DashboardPage() {
     }
   };
 
+  // Manual save session
+  const handleSaveSession = async () => {
+    if (!sessionData || isSaving) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sessionData),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setIsSaved(true);
+      }
+    } catch {
+      // Handle error
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleClearSession = () => {
     setSessionData(null);
     setExtractedDoc(null);
     setExtractionWarning(null);
+    setIsSaved(false);
     resetUpload();
     setActiveTab("upload");
   };
@@ -196,6 +264,11 @@ export default function DashboardPage() {
                   Session Active
                 </Badge>
               )}
+              {isSaved && (
+                <Badge variant="secondary" className="text-[10px] text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
+                  <Check className="w-3 h-3 inline mr-1" /> Saved in Library
+                </Badge>
+              )}
               {extractedDoc && (
                 <Badge variant="secondary" className="text-[10px] font-mono">
                   {extractedDoc.chunks.length} Chunks Generated
@@ -215,6 +288,19 @@ export default function DashboardPage() {
 
           {sessionData && (
             <div className="flex items-center gap-2">
+              {!isSaved && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  disabled={isSaving}
+                  className="text-xs gap-1.5"
+                  onClick={handleSaveSession}
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {isSaving ? "Saving..." : "Save to Library"}
+                </Button>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"
@@ -361,5 +447,19 @@ export default function DashboardPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <LoadingState title="Loading Workspace..." subtitle="Initializing study engine components." />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </React.Suspense>
   );
 }

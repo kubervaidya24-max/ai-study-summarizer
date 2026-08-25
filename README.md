@@ -94,7 +94,7 @@ The application is built following a strict 19-level engineering progression:
 | **07** | Quiz / MCQ Engine | Interactive multiple choice questions, scoring, feedback | 🟢 Completed |
 | **08** | Authentication | Auth.js v5, protected sessions, user identity | 🟢 Completed |
 | **09** | Database & Persistence | Prisma ORM, relational schema, study session models | 🟢 Completed |
-| **10** | Study History | Saved sessions, dashboard history list, resume study | ⏳ Pending |
+| **10** | Study History | Saved sessions, dashboard history list, resume study | 🟢 Completed |
 | **11** | Markdown & PDF Export | Clean study guide exports for offline review | ⏳ Pending |
 | **12** | Latency Telemetry | Non-PII execution metrics, processing timer logging | ⏳ Pending |
 | **13** | Error Handling Pass | Standardized API errors, fallback UI, boundary handling | ⏳ Pending |

@@ -133,11 +133,11 @@ flowchart TD
 
 ---
 
-### Level 10: Persistent Study History
-- **Branch**: `level-10-study-history`
-- **Scope**: "My Studies" history dashboard, session list with search & filter by topic/date, resume study session endpoint, previous quiz attempt scores, cascade deletion of study sessions.
-- **Verification**: Reopening saved session restores summary, flashcards, and quizzes.
-- **Status**: ⏳ Pending
+### Level 10: Study History & Dashboard
+- **Branch**: `level-10-history`
+- **Scope**: User study session history listing, session search & format filtering, single session hydration into workspace (`/dashboard?sessionId=...`), session deletion with cascade, quiz attempt history tracking.
+- **Verification**: Smooth resume-study transition, accurate filtering across PDF, text notes, and markdown.
+- **Status**: 🟢 Completed
 
 ---
 
