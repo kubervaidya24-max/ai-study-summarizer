@@ -90,7 +90,7 @@ The application is built following a strict 19-level engineering progression:
 | **03** | File Upload System | Drag-and-drop, validation, client/server file intake | 🟢 Completed |
 | **04** | PDF/Text Extraction | PDF parsing, sanitization, Unicode handling, chunking | 🟢 Completed |
 | **05** | LLM Summary Engine | Provider-agnostic AI adapter, structured Zod output | 🟢 Completed |
-| **06** | Flashcard Engine | 3D flip card viewer, rating, shuffle, active recall | ⏳ Pending |
+| **06** | Flashcard Engine | 3D flip card viewer, rating, shuffle, active recall | 🟢 Completed |
 | **07** | Quiz / MCQ Engine | Interactive multiple choice questions, scoring, feedback | ⏳ Pending |
 | **08** | Authentication | Auth.js v5, protected sessions, user identity | ⏳ Pending |
 | **09** | Database & Persistence | Prisma ORM, relational schema, study session models | ⏳ Pending |

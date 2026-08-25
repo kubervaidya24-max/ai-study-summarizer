@@ -11,7 +11,7 @@ import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { mockStudySession } from "@/lib/mock-data";
-import { StudySessionData, ExtractedDocumentResult, StudySummary, ApiResponse } from "@/types";
+import { StudySessionData, ExtractedDocumentResult, StudySummary, Flashcard, ApiResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -56,7 +56,7 @@ export default function DashboardPage() {
     }, 600);
   };
 
-  // Real document extraction & AI generation handler
+  // Real document extraction & multi-asset AI generation handler
   const handleFileSelect = async (file: File) => {
     setIsProcessing(true);
     setExtractionWarning(null);
@@ -88,30 +88,42 @@ export default function DashboardPage() {
         setExtractionWarning(doc.warning);
       }
 
-      // Step 2: Generate AI Summary
+      // Step 2: Generate AI Summary and Flashcards in parallel
       setLoadingMessage({
-        title: "AI Synthesis in Progress...",
-        subtitle: "Analyzing concepts, synthesizing core takeaways, and drafting exam tips.",
+        title: "AI Synthesis & Flashcard Generation in Progress...",
+        subtitle: "Drafting high-yield summary, extracting key concepts, and generating 3D active-recall flashcards.",
       });
 
-      const summaryRes = await fetch("/api/generate/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: doc.cleanedText,
-          options: { detailLevel: "detailed" },
+      const [summaryRes, flashcardsRes] = await Promise.all([
+        fetch("/api/generate/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: doc.cleanedText,
+            options: { detailLevel: "detailed" },
+          }),
         }),
-      });
+        fetch("/api/generate/flashcards", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: doc.cleanedText,
+            count: 6,
+          }),
+        }),
+      ]);
 
       const summaryResult: ApiResponse<StudySummary> = await summaryRes.json();
+      const flashcardsResult: ApiResponse<Flashcard[]> = await flashcardsRes.json();
 
       if (!summaryRes.ok || !summaryResult.success || !summaryResult.data) {
         throw new Error(summaryResult.error?.message || "Failed to generate AI summary.");
       }
 
       const summary = summaryResult.data;
+      const flashcards = flashcardsResult.success && flashcardsResult.data ? flashcardsResult.data : mockStudySession.flashcards;
 
-      // Initialize session with live AI summary (flashcards & quiz populated with mock templates until Levels 6 & 7)
+      // Initialize session with live AI summary and live flashcards (quiz populated with mock templates until Level 7)
       setSessionData({
         id: `session_${Date.now()}`,
         title: summary.title || doc.metadata.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
@@ -123,7 +135,7 @@ export default function DashboardPage() {
         },
         extractedText: doc.cleanedText,
         summary,
-        flashcards: mockStudySession.flashcards,
+        flashcards,
         quiz: mockStudySession.quiz,
       });
 
@@ -278,7 +290,15 @@ export default function DashboardPage() {
             {/* TAB 3: FLASHCARDS */}
             <TabsContent value="flashcards" className="pt-4">
               {sessionData ? (
-                <FlashcardViewer initialCards={sessionData.flashcards} />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                      Active Recall Flashcard Deck ({sessionData.flashcards.length} Cards)
+                    </span>
+                  </div>
+                  <FlashcardViewer initialCards={sessionData.flashcards} />
+                </div>
               ) : (
                 <EmptyState
                   icon={Layers}
