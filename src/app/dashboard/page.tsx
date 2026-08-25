@@ -11,7 +11,7 @@ import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
 import { mockStudySession } from "@/lib/mock-data";
-import { StudySessionData, ExtractedDocumentResult, ApiResponse } from "@/types";
+import { StudySessionData, ExtractedDocumentResult, StudySummary, ApiResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFileUpload } from "@/hooks/use-file-upload";
@@ -22,13 +22,15 @@ import {
   HelpCircle,
   FileText,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = React.useState<string>("upload");
   const [sessionData, setSessionData] = React.useState<StudySessionData | null>(null);
   const [extractedDoc, setExtractedDoc] = React.useState<ExtractedDocumentResult | null>(null);
-  const [isProcessingDoc, setIsProcessingDoc] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] = React.useState({ title: "", subtitle: "" });
   const [extractionWarning, setExtractionWarning] = React.useState<string | null>(null);
 
   const {
@@ -40,60 +42,96 @@ export default function DashboardPage() {
 
   // Load sample demo session
   const handleLoadSample = () => {
-    setIsProcessingDoc(true);
+    setIsProcessing(true);
+    setLoadingMessage({
+      title: "Loading Sample Study Session...",
+      subtitle: "Populating Distributed Systems & Raft Consensus deck.",
+    });
     setExtractionWarning(null);
     setTimeout(() => {
       setSessionData(mockStudySession);
       setExtractedDoc(null);
-      setIsProcessingDoc(false);
+      setIsProcessing(false);
       setActiveTab("summary");
     }, 600);
   };
 
-  // Real document upload & extraction handler
+  // Real document extraction & AI generation handler
   const handleFileSelect = async (file: File) => {
-    setIsProcessingDoc(true);
+    setIsProcessing(true);
     setExtractionWarning(null);
+    setLoadingMessage({
+      title: "Extracting Document Content...",
+      subtitle: "Parsing document structure and cleaning text layers.",
+    });
 
     try {
+      // Step 1: Extract text
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/document/extract", {
+      const extractRes = await fetch("/api/document/extract", {
         method: "POST",
         body: formData,
       });
 
-      const result: ApiResponse<ExtractedDocumentResult> = await response.json();
+      const extractResult: ApiResponse<ExtractedDocumentResult> = await extractRes.json();
 
-      if (!response.ok || !result.success || !result.data) {
-        throw new Error(result.error?.message || "Failed to extract text from document.");
+      if (!extractRes.ok || !extractResult.success || !extractResult.data) {
+        throw new Error(extractResult.error?.message || "Failed to extract text from document.");
       }
 
-      const doc = result.data;
+      const doc = extractResult.data;
       setExtractedDoc(doc);
 
       if (doc.warning) {
         setExtractionWarning(doc.warning);
       }
 
-      // Initialize session with extracted metadata and mock study assets for Level 4
+      // Step 2: Generate AI Summary
+      setLoadingMessage({
+        title: "AI Synthesis in Progress...",
+        subtitle: "Analyzing concepts, synthesizing core takeaways, and drafting exam tips.",
+      });
+
+      const summaryRes = await fetch("/api/generate/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: doc.cleanedText,
+          options: { detailLevel: "detailed" },
+        }),
+      });
+
+      const summaryResult: ApiResponse<StudySummary> = await summaryRes.json();
+
+      if (!summaryRes.ok || !summaryResult.success || !summaryResult.data) {
+        throw new Error(summaryResult.error?.message || "Failed to generate AI summary.");
+      }
+
+      const summary = summaryResult.data;
+
+      // Initialize session with live AI summary (flashcards & quiz populated with mock templates until Levels 6 & 7)
       setSessionData({
-        ...mockStudySession,
-        title: doc.metadata.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
+        id: `session_${Date.now()}`,
+        title: summary.title || doc.metadata.fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
+        createdAt: new Date().toISOString(),
         document: {
           ...doc.metadata,
           wordCount: doc.wordCount,
           pageCount: doc.pageCount || 1,
         },
         extractedText: doc.cleanedText,
+        summary,
+        flashcards: mockStudySession.flashcards,
+        quiz: mockStudySession.quiz,
       });
 
-      setIsProcessingDoc(false);
+      setIsProcessing(false);
       setActiveTab("summary");
     } catch (err: unknown) {
-      setIsProcessingDoc(false);
-      const message = err instanceof Error ? err.message : "Document extraction failed.";
+      setIsProcessing(false);
+      const message = err instanceof Error ? err.message : "Document processing failed.";
       setExtractionWarning(message);
     }
   };
@@ -160,18 +198,18 @@ export default function DashboardPage() {
           <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-300 text-xs md:text-sm animate-in fade-in-50">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <span className="font-semibold text-white">Document Processing Notice</span>
+              <span className="font-semibold text-white">Notice</span>
               <p className="leading-relaxed">{extractionWarning}</p>
             </div>
           </div>
         )}
 
         {/* Loading Overlay */}
-        {isProcessingDoc ? (
+        {isProcessing ? (
           <div className="glass-panel p-12 rounded-3xl">
             <LoadingState
-              title="Extracting & Normalizing Text..."
-              subtitle="Parsing document structure, cleaning Unicode formatting, and building semantic chunks."
+              title={loadingMessage.title || "Generating Study Assets..."}
+              subtitle={loadingMessage.subtitle || "Synthesizing key concepts and drafting study cards."}
             />
           </div>
         ) : (
@@ -217,7 +255,15 @@ export default function DashboardPage() {
             {/* TAB 2: SUMMARY */}
             <TabsContent value="summary" className="pt-4">
               {sessionData ? (
-                <SummaryViewer summary={sessionData.summary} />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                      Generated by AI Summarizer Engine
+                    </span>
+                  </div>
+                  <SummaryViewer summary={sessionData.summary} />
+                </div>
               ) : (
                 <EmptyState
                   icon={BookOpen}
