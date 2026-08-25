@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { siteConfig } from "@/config/site";
 import { AppSessionProvider } from "@/components/providers/session-provider";
+import { ToastContainer } from "@/components/ui/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,7 +46,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="antialiased min-h-screen bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white">
-        <AppSessionProvider>{children}</AppSessionProvider>
+        <AppSessionProvider>
+          {children}
+          <ToastContainer />
+        </AppSessionProvider>
       </body>
     </html>
   );
