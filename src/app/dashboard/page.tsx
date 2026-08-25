@@ -1,20 +1,17 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UploadDropzone } from "@/components/upload/upload-dropzone";
-import { SummaryViewer } from "@/components/summary/summary-viewer";
-import { FlashcardViewer } from "@/components/flashcards/flashcard-viewer";
-import { QuizEngine } from "@/components/quiz/quiz-engine";
 import { LoadingState } from "@/components/common/loading-state";
 import { EmptyState } from "@/components/common/empty-state";
-import { ExportModal } from "@/components/export/export-modal";
-import { TelemetryBadge } from "@/components/common/telemetry-badge";
-import { PipelineTelemetry, TelemetryTimer } from "@/services/telemetry";
+import { Skeleton } from "@/components/ui/skeleton";
 import { mockStudySession } from "@/lib/mock-data";
+import { PipelineTelemetry, TelemetryTimer } from "@/services/telemetry";
 import {
   StudySessionData,
   ExtractedDocumentResult,
@@ -38,6 +35,62 @@ import {
   Check,
   Download,
 } from "lucide-react";
+
+// Dynamic Code Splitting for heavy components
+const SummaryViewer = dynamic(
+  () => import("@/components/summary/summary-viewer").then((mod) => mod.SummaryViewer),
+  {
+    loading: () => (
+      <div className="space-y-6 animate-pulse">
+        <Skeleton className="h-40 w-full rounded-3xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+        </div>
+      </div>
+    ),
+  }
+);
+
+const FlashcardViewer = dynamic(
+  () => import("@/components/flashcards/flashcard-viewer").then((mod) => mod.FlashcardViewer),
+  {
+    loading: () => (
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <Skeleton className="h-64 w-full max-w-xl rounded-3xl" />
+        <div className="flex gap-3">
+          <Skeleton className="h-10 w-24 rounded-xl" />
+          <Skeleton className="h-10 w-24 rounded-xl" />
+        </div>
+      </div>
+    ),
+  }
+);
+
+const QuizEngine = dynamic(
+  () => import("@/components/quiz/quiz-engine").then((mod) => mod.QuizEngine),
+  {
+    loading: () => (
+      <div className="max-w-2xl mx-auto space-y-4 p-6">
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    ),
+  }
+);
+
+const ExportModal = dynamic(
+  () => import("@/components/export/export-modal").then((mod) => mod.ExportModal),
+  { ssr: false }
+);
+
+const TelemetryBadge = dynamic(
+  () => import("@/components/common/telemetry-badge").then((mod) => mod.TelemetryBadge),
+  { ssr: false }
+);
 
 function DashboardContent() {
   const searchParams = useSearchParams();
