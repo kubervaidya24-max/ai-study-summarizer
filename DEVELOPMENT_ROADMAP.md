@@ -121,7 +121,7 @@ flowchart TD
 - **Branch**: `level-08-auth`
 - **Scope**: Auth.js (NextAuth v5) integration, JWT session handling, credentials provider, password hashing with bcrypt, protected route middleware (`/dashboard`, `/study/*`), user profile dropdown.
 - **Verification**: Unauthenticated redirect to login, valid session preservation across page reloads.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
