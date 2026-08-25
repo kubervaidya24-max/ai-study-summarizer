@@ -446,7 +446,7 @@ function DashboardContent() {
           /* Main Tab Navigation & Views */
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="flex justify-center md:justify-start">
-              <TabsList className="grid grid-cols-4 w-full md:w-auto min-w-[340px] md:min-w-[500px]">
+              <TabsList className="grid grid-cols-4 w-full md:w-auto min-w-[340px] md:min-w-[540px]">
                 <TabsTrigger value="upload" className="text-xs md:text-sm">
                   <UploadCloud className="w-4 h-4" />
                   <span className="hidden sm:inline">Upload</span>
@@ -454,14 +454,29 @@ function DashboardContent() {
                 <TabsTrigger value="summary" className="text-xs md:text-sm">
                   <BookOpen className="w-4 h-4" />
                   <span className="hidden sm:inline">Summary</span>
+                  {sessionData && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full bg-blue-500/20 text-[10px] text-blue-300 font-mono hidden md:inline">
+                      Ready
+                    </span>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="flashcards" className="text-xs md:text-sm">
                   <Layers className="w-4 h-4" />
-                  <span className="hidden sm:inline">Flashcards</span>
+                  <span className="hidden sm:inline">Cards</span>
+                  {sessionData && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full bg-purple-500/20 text-[10px] text-purple-300 font-mono">
+                      {sessionData.flashcards.length}
+                    </span>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="quiz" className="text-xs md:text-sm">
                   <HelpCircle className="w-4 h-4" />
                   <span className="hidden sm:inline">Quiz</span>
+                  {sessionData && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-[10px] text-emerald-300 font-mono">
+                      {sessionData.quiz.length}Q
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </div>
