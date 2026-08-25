@@ -159,9 +159,9 @@ flowchart TD
 
 ### Level 13: Resilient Error Handling Pass
 - **Branch**: `level-13-error-handling`
-- **Scope**: Standardized API error response envelopes, custom error classes (`ExtractionError`, `AIServiceError`, `ValidationError`), React error boundaries, friendly user-facing toast notifications.
+- **Scope**: Standardized API error response envelopes, custom error classes (`ValidationError`, `ExtractionError`, `AIServiceError`, `AuthError`, `RateLimitError`), React error boundaries (`error.tsx`, `not-found.tsx`, `global-error.tsx`), accessible toast notification system.
 - **Verification**: Controlled UI recovery on network timeout or AI rate-limit failure.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
