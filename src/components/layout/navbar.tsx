@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { Brain, BookOpen, Menu, X, Sparkles } from "lucide-react";
 import { GithubIcon } from "@/components/common/github-icon";
+import { UserMenu } from "./user-menu";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -73,10 +74,14 @@ export function Navbar() {
               Launch Workspace
             </Button>
           </Link>
+
+          {/* User Profile / Auth Action */}
+          <UserMenu />
         </div>
 
         {/* Mobile Menu Button */}
         <div className="flex md:hidden items-center gap-2">
+          <UserMenu />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800"
