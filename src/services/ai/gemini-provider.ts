@@ -3,8 +3,10 @@ import { LLMProvider, SummaryGenerationOptions } from "./provider";
 import { StudySummary, Flashcard, QuizQuestion } from "@/types";
 import { cleanAndParseSummaryJson } from "./schemas/summary";
 import { cleanAndParseFlashcardsJson } from "./schemas/flashcards";
+import { cleanAndParseQuizJson } from "./schemas/quiz";
 import { SUMMARY_SYSTEM_PROMPT, buildSummaryUserPrompt } from "./prompts/summary";
 import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "./prompts/flashcards";
+import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt } from "./prompts/quiz";
 
 export class GeminiProvider implements LLMProvider {
   name = "Google Gemini";
@@ -53,7 +55,20 @@ export class GeminiProvider implements LLMProvider {
     return cleanAndParseFlashcardsJson(responseText);
   }
 
-  async generateQuiz(): Promise<QuizQuestion[]> {
-    throw new Error("Quiz generation will be implemented in Level 7.");
+  async generateQuiz(text: string, questionCount = 5): Promise<QuizQuestion[]> {
+    const model = this.genAI.getGenerativeModel({
+      model: this.modelName,
+      systemInstruction: QUIZ_SYSTEM_PROMPT,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.2,
+      },
+    });
+
+    const userPrompt = buildQuizUserPrompt(text, questionCount);
+    const result = await model.generateContent(userPrompt);
+    const responseText = result.response.text();
+
+    return cleanAndParseQuizJson(responseText);
   }
 }

@@ -126,7 +126,90 @@ export class MockProvider implements LLMProvider {
     return baseCards.slice(0, count);
   }
 
-  async generateQuiz(): Promise<QuizQuestion[]> {
-    throw new Error("Quiz generation will be implemented in Level 7.");
+  async generateQuiz(text: string, questionCount = 5): Promise<QuizQuestion[]> {
+    const sentences = text
+      .split(/[.!?]\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 25 && s.length < 160);
+
+    const baseQuestions: QuizQuestion[] = [
+      {
+        id: "mock_quiz_1",
+        question: "What is the primary requirement for electing a valid leader in a distributed consensus cluster?",
+        options: [
+          "The node must have the lowest IP address in the network topology.",
+          "The candidate's log must be at least as up-to-date as the majority of cluster nodes.",
+          "The node must have been active for at least 24 continuous hours.",
+          "The node must send an InstallSnapshot RPC to all backup proxies.",
+        ],
+        correctIndex: 1,
+        explanation:
+          "Leaders must contain all committed entries from prior terms. Nodes verify log completeness before granting election votes.",
+        topic: "Leader Election",
+        difficulty: "MEDIUM",
+      },
+      {
+        id: "mock_quiz_2",
+        question: "How does the system prevent deadlock scenarios when simultaneous elections occur?",
+        options: [
+          "Randomized election timeouts on follower nodes break candidate symmetry.",
+          "Hardware clock synchronization with atomic GPS clocks.",
+          "A centralized arbitrator server makes the final decision.",
+          "All nodes reboot simultaneously upon detecting a split vote.",
+        ],
+        correctIndex: 0,
+        explanation:
+          "Randomized timeouts (e.g., 150ms–300ms) ensure one follower times out and gathers majority votes before competing nodes start.",
+        topic: "Symmetry Breaking",
+        difficulty: "EASY",
+      },
+      {
+        id: "mock_quiz_3",
+        question: `Based on the study material, which statement accurately reflects state machine replication?`,
+        options: [
+          "State machines can produce arbitrary non-deterministic outputs if given identical inputs.",
+          "Replicas execute the same deterministic sequence of commands from an ordered replicated log.",
+          "State machines only replicate memory caches and discard disk storage upon failover.",
+          "Clients bypass the leader and write directly to followers.",
+        ],
+        correctIndex: 1,
+        explanation:
+          sentences[0] || "State Machine Replication guarantees that deterministic state machines computing identical sequences of commands arrive at identical states.",
+        topic: "State Machine Replication",
+        difficulty: "MEDIUM",
+      },
+      {
+        id: "mock_quiz_4",
+        question: "In a 5-node consensus cluster, what is the minimum quorum required to commit a log entry?",
+        options: [
+          "2 nodes",
+          "3 nodes",
+          "4 nodes",
+          "5 nodes",
+        ],
+        correctIndex: 1,
+        explanation:
+          "Quorum is defined as a strict majority: ⌊N / 2⌋ + 1. For N = 5, Quorum = 3 nodes, allowing the cluster to endure 2 node crashes.",
+        topic: "Cluster Geometry",
+        difficulty: "EASY",
+      },
+      {
+        id: "mock_quiz_5",
+        question: "Why can a leader NOT directly commit a log entry from an older term by counting replicas?",
+        options: [
+          "Because older term entries can still be legitimately overwritten if the previous leader crashed before committing.",
+          "Because older term numbers are automatically deleted by the garbage collector.",
+          "Because followers refuse to store entries with term numbers lower than 100.",
+          "Because TCP sockets disconnect after term changes.",
+        ],
+        correctIndex: 0,
+        explanation:
+          "To guarantee safety, Raft only commits entries from the current term directly; committing a current-term entry indirectly commits all preceding entries via the Log Matching property.",
+        topic: "Safety Invariants",
+        difficulty: "HARD",
+      },
+    ];
+
+    return baseQuestions.slice(0, questionCount);
   }
 }
