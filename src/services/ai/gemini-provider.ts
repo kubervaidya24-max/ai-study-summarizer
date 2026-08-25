@@ -2,7 +2,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { LLMProvider, SummaryGenerationOptions } from "./provider";
 import { StudySummary, Flashcard, QuizQuestion } from "@/types";
 import { cleanAndParseSummaryJson } from "./schemas/summary";
+import { cleanAndParseFlashcardsJson } from "./schemas/flashcards";
 import { SUMMARY_SYSTEM_PROMPT, buildSummaryUserPrompt } from "./prompts/summary";
+import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "./prompts/flashcards";
 
 export class GeminiProvider implements LLMProvider {
   name = "Google Gemini";
@@ -34,8 +36,21 @@ export class GeminiProvider implements LLMProvider {
     return cleanAndParseSummaryJson(responseText);
   }
 
-  async generateFlashcards(): Promise<Flashcard[]> {
-    throw new Error("Flashcards generation will be implemented in Level 6.");
+  async generateFlashcards(text: string, count = 6): Promise<Flashcard[]> {
+    const model = this.genAI.getGenerativeModel({
+      model: this.modelName,
+      systemInstruction: FLASHCARDS_SYSTEM_PROMPT,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.3,
+      },
+    });
+
+    const userPrompt = buildFlashcardsUserPrompt(text, count);
+    const result = await model.generateContent(userPrompt);
+    const responseText = result.response.text();
+
+    return cleanAndParseFlashcardsJson(responseText);
   }
 
   async generateQuiz(): Promise<QuizQuestion[]> {
