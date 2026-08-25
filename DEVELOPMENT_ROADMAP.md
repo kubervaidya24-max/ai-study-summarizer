@@ -151,9 +151,9 @@ flowchart TD
 
 ### Level 12: Latency Telemetry & Observability
 - **Branch**: `level-12-telemetry`
-- **Scope**: Non-PII latency logging interceptor, timings for extraction, chunking, AI generation roundtrips, token estimation, dev telemetry dashboard widget.
+- **Scope**: Non-PII latency logging interceptor, timings for extraction, chunking, AI generation roundtrips, token estimation, throughput calculations (tok/s), dev telemetry dashboard widget with stage-by-stage breakdown.
 - **Verification**: Accurate elapsed time measurement; zero leakage of user PII or raw documents.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
