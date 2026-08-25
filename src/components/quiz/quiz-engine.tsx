@@ -40,18 +40,21 @@ export function QuizEngine({ questions, onFinish }: QuizEngineProps) {
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
 
-  const handleSelectOption = (index: number) => {
-    if (isAnswered) return; // Prevent changing after submitting
-    setSelectedOption(index);
-    setIsAnswered(true);
+  const handleSelectOption = React.useCallback(
+    (index: number) => {
+      if (isAnswered || !currentQuestion) return;
+      setSelectedOption(index);
+      setIsAnswered(true);
 
-    const isCorrect = index === currentQuestion.correctIndex;
-    if (isCorrect) {
-      setScore((prev) => prev + 1);
-    }
-  };
+      const isCorrect = index === currentQuestion.correctIndex;
+      if (isCorrect) {
+        setScore((prev) => prev + 1);
+      }
+    },
+    [isAnswered, currentQuestion]
+  );
 
-  const handleNext = () => {
+  const handleNext = React.useCallback(() => {
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
@@ -60,7 +63,29 @@ export function QuizEngine({ questions, onFinish }: QuizEngineProps) {
       setIsQuizComplete(true);
       if (onFinish) onFinish(score, totalQuestions);
     }
-  };
+  }, [currentIndex, totalQuestions, score, onFinish]);
+
+  // Keyboard navigation: keys 1-4 to select option, Enter to proceed
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isQuizComplete) return;
+
+      if (!isAnswered) {
+        if (e.key === "1") handleSelectOption(0);
+        else if (e.key === "2") handleSelectOption(1);
+        else if (e.key === "3") handleSelectOption(2);
+        else if (e.key === "4") handleSelectOption(3);
+      } else {
+        if (e.key === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          handleNext();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isAnswered, isQuizComplete, handleSelectOption, handleNext]);
 
   const handleRestart = () => {
     setCurrentIndex(0);
@@ -202,15 +227,23 @@ export function QuizEngine({ questions, onFinish }: QuizEngineProps) {
                   <span className="leading-relaxed mt-0.5">{option}</span>
                 </div>
 
-                {isAnswered && (
-                  <div className="shrink-0 mt-0.5">
-                    {isCorrectOption ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-in zoom-in-50" />
-                    ) : isSelected ? (
-                      <XCircle className="w-5 h-5 text-red-400 animate-in zoom-in-50" />
-                    ) : null}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                  {!isAnswered && (
+                    <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-slate-800/70 border border-slate-700/60 text-[10px] font-mono text-slate-400">
+                      {idx + 1}
+                    </kbd>
+                  )}
+
+                  {isAnswered && (
+                    <div>
+                      {isCorrectOption ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 animate-in zoom-in-50" />
+                      ) : isSelected ? (
+                        <XCircle className="w-5 h-5 text-red-400 animate-in zoom-in-50" />
+                      ) : null}
+                    </div>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -231,7 +264,7 @@ export function QuizEngine({ questions, onFinish }: QuizEngineProps) {
 
         <CardFooter className="flex justify-between items-center pt-2">
           <span className="text-xs text-slate-400 font-mono">
-            {isAnswered ? "Answer submitted" : "Select an option to verify"}
+            {isAnswered ? "Press Enter for next" : "Select 1-4 on keyboard to pick"}
           </span>
 
           {isAnswered && (

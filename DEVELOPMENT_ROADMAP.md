@@ -190,10 +190,10 @@ flowchart TD
 ---
 
 ### Level 17: UI/UX Polish & Micro-Interactions
-- **Branch**: `level-17-polish`
-- **Scope**: Polish transitions, subtle hover micro-animations, skeleton loaders, accessible ARIA labels, full keyboard navigation, mobile touch gestures on flashcards.
-- **Verification**: Premium SaaS aesthetic audit, zero accessibility violations.
-- **Status**: ⏳ Pending
+- **Branch**: `level-17-ui-polish`
+- **Scope**: Keyboard shortcuts (`[1-4]`, `[Enter]` for quiz player; `[Space]`, `[←/→]`, `[S]` for flashcards); concept search & filter with copy-to-clipboard actions; live count badges in dashboard navigation tabs.
+- **Verification**: Smooth keyboard navigability, responsive feedback toasts, and accessible focus states across all viewport sizes.
+- **Status**: 🟢 Completed
 
 ---
 
