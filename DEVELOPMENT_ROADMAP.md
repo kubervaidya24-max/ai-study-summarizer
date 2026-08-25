@@ -143,9 +143,9 @@ flowchart TD
 
 ### Level 11: Markdown & PDF Export
 - **Branch**: `level-11-export`
-- **Scope**: Clean Markdown export generator (formatted summary, flashcard Q&A list, quiz with answer key), PDF document export generator with clean typography and pagination.
+- **Scope**: Clean Markdown export generator (formatted summary, flashcard Q&A list, quiz with answer key), PDF document export generator with clean typography, page-break rules, and Anki/Quizlet CSV copy.
 - **Verification**: Downloaded `.md` and `.pdf` files are well-formatted and render without truncation.
-- **Status**: ⏳ Pending
+- **Status**: 🟢 Completed
 
 ---
 
